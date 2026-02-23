@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Jobs\SendOrderConfirmationJob;
+use App\Jobs\UpdateInventoryJob;
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 
@@ -65,7 +67,14 @@ class OrderService
         // Prepare notification payload (SOA: NotificationService builds it, doesn't send)
         $this->notificationService->prepareOrderConfirmation($order);
 
-        // NOTE: Async job dispatching and event firing will be added in Issues #4 and #5
+        // Message Queue: Dispatch async jobs AFTER the order is persisted
+        // These run in the background via `php artisan queue:work`
+        SendOrderConfirmationJob::dispatch($order);
+        UpdateInventoryJob::dispatch($order);
+
+        Log::info("OrderService: Dispatched async jobs for Order #{$order->id}");
+
+        // NOTE: Event firing and webhook will be added in Issue #5
 
         return $order;
     }
