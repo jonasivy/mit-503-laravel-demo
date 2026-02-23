@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Middleware: Apply LogApiRequest to all API routes
+        $middleware->api(append: [
+            \App\Http\Middleware\LogApiRequest::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
