@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Events\OrderPlaced;
 use App\Jobs\SendOrderConfirmationJob;
 use App\Jobs\UpdateInventoryJob;
 use App\Models\Order;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -74,7 +76,11 @@ class OrderService
 
         Log::info("OrderService: Dispatched async jobs for Order #{$order->id}");
 
-        // NOTE: Event firing and webhook will be added in Issue #5
+        // System Integration: Fire event — listeners react without OrderService knowing about them
+        OrderPlaced::dispatch($order);
+
+        // System Integration: Outbound webhook — POST order data to external system
+        $this->sendWebhook($order);
 
         return $order;
     }
@@ -101,6 +107,34 @@ class OrderService
     public function findOrder(int $id): Order
     {
         return Order::findOrFail($id);
+    }
+
+    /**
+     * Send an outbound webhook notification to a configured URL.
+     *
+     * System Integration: Demonstrates outbound HTTP integration.
+     * The WEBHOOK_URL is configurable via .env. A local /api/v1/webhook-test
+     * route is provided for demo purposes. Failures are logged but do not
+     * block the order creation response.
+     */
+    private function sendWebhook(Order $order): void
+    {
+        $webhookUrl = config('services.webhook.url');
+
+        if (empty($webhookUrl)) {
+            Log::info("OrderService: No WEBHOOK_URL configured, skipping webhook");
+            return;
+        }
+
+        try {
+            $payload = $this->notificationService->prepareWebhookPayload($order);
+            $response = Http::timeout(5)->post($webhookUrl, $payload);
+
+            Log::info("OrderService: Webhook sent to {$webhookUrl} — status: {$response->status()}");
+        } catch (\Exception $e) {
+            // Webhook failure should not block order creation
+            Log::warning("OrderService: Webhook failed — {$e->getMessage()}");
+        }
     }
 
     /**

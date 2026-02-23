@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // System Integration: Outbound webhook URL for order notifications
+    'webhook' => [
+        'url' => env('WEBHOOK_URL'),
+    ],
+
 ];
