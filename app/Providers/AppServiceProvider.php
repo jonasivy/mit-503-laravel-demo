@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\OrderPlaced;
+use App\Listeners\SendNotificationListener;
 use App\Services\InventoryService;
 use App\Services\NotificationService;
 use App\Services\OrderService;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // System Integration: Register event → listener mapping
+        // When OrderPlaced fires, SendNotificationListener handles it
+        Event::listen(OrderPlaced::class, SendNotificationListener::class);
     }
 }
