@@ -127,6 +127,26 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | Custom Channels for Order Processing API Demo
+        |--------------------------------------------------------------------------
+        */
+
+        // Message Queue: Notification logs from SendOrderConfirmationJob
+        'notifications' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/notifications.log'),
+            'level' => 'info',
+        ],
+
+        // Middleware: API request/response logs from LogApiRequest
+        'api_requests' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/api_requests.log'),
+            'level' => 'info',
+        ],
+
     ],
 
 ];
